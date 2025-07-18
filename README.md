@@ -40,12 +40,39 @@ source install/setup.bash
 
 ## Usage
 
+### Prerequisites
+
+**IMPORTANT**: This package requires the Ouster ROS driver to be running first, as it subscribes to the `/ouster/points` topic.
+
+1. **First, launch the Ouster ROS driver:**
+```bash
+# For live sensor (replace with your sensor's IP)
+ros2 launch ouster_ros driver.launch.py sensor_hostname:=<SENSOR_IP>
+
+# OR for bag file replay
+ros2 bag play <your_bag_file.bag>
+```
+
+2. **Verify the Ouster driver is publishing:**
+```bash
+ros2 topic hz /ouster/points
+# Should show ~10 Hz publication rate
+```
+
 ### Basic Launch
 
-Start the point cloud slicer with default parameters:
+After the Ouster driver is running, start the point cloud slicer:
 
 ```bash
 ros2 launch ouster_pointcloud_slice slice.launch.py
+```
+
+### Direct Node Execution
+
+Alternatively, run the node directly:
+
+```bash
+ros2 run ouster_pointcloud_slice pointcloud_slice_node
 ```
 
 **Default Parameters:**
@@ -83,12 +110,37 @@ ros2 param set /ouster_slice min_angle_deg -45.0
 ros2 param set /ouster_slice max_angle_deg 45.0
 ```
 
+## Visualization with RViz2
+
+To visualize both original and filtered point clouds:
+
+1. **Ensure both Ouster driver and slice node are running**
+
+2. **Launch RViz2:**
+```bash
+rviz2
+```
+
+3. **Configure RViz2:**
+   - Set **Fixed Frame** to `os_sensor` or `os_lidar`
+   - Add two **PointCloud2** displays:
+     - Topic 1: `/ouster/points` (original 360° cloud)
+     - Topic 2: `/ouster/points_filtered` (filtered sector)
+   - Use different colors to distinguish the clouds
+
+4. **Test live filtering:**
+```bash
+# Change the angular sector in real-time
+ros2 param set /ouster_slice min_angle_deg 45.0
+ros2 param set /ouster_slice max_angle_deg 135.0
+```
+
 ## Performance Testing
 
 ### Check Publication Rate
 ```bash
 ros2 topic hz /ouster/points_filtered
-# Expected: ~19 Hz (matching your LiDAR frequency)
+# Expected: ~10 Hz (matching your LiDAR frequency)
 ```
 
 ### Check Latency

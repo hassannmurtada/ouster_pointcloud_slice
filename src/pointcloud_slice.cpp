@@ -20,13 +20,18 @@ public:
 
     get_parameters();
 
+    // Subscription uses SensorDataQoS to match Ouster driver (BEST_EFFORT)
     sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
       params_.input_topic, rclcpp::SensorDataQoS(),
       std::bind(&CloudSlicer::callback, this, std::placeholders::_1)
     );
 
+    // Publisher uses RELIABLE QoS for RViz2 compatibility
+    auto reliable_qos = rclcpp::QoS(10);
+    reliable_qos.reliability(rclcpp::ReliabilityPolicy::Reliable);
+    
     pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
-      params_.output_topic, rclcpp::SensorDataQoS()
+      params_.output_topic, reliable_qos
     );
 
     RCLCPP_INFO(get_logger(),
@@ -78,29 +83,35 @@ private:
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::fromROSMsg(*msg, *cloud);
 
-    // 1) Range filter
-    pcl::PassThrough<pcl::PointXYZI> pass;
-    pass.setInputCloud(cloud);
-    pass.setFilterFieldName("x");  // approximate radial by X; for full radial, skip this
-    pass.setFilterLimits(params_.min_range, params_.max_range);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ranged(new pcl::PointCloud<pcl::PointXYZI>);
-    pass.filter(*cloud_ranged);
-
-    // 2) Azimuth filter
+    // Combined range and azimuth filter in one pass for efficiency
     pcl::PointCloud<pcl::PointXYZI>::Ptr kept(new pcl::PointCloud<pcl::PointXYZI>);
-    kept->reserve(cloud_ranged->size());
+    kept->reserve(cloud->size());
+    
     double min_a = params_.min_angle_deg * M_PI / 180.0;
     double max_a = params_.max_angle_deg * M_PI / 180.0;
 
-    for (auto &p : cloud_ranged->points) {
+    for (const auto &p : cloud->points) {
+      // Skip invalid points
+      if (!std::isfinite(p.x) || !std::isfinite(p.y) || !std::isfinite(p.z))
+        continue;
+        
+      // Calculate actual radial distance (not just X)
+      double range = std::sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
+      
+      // Range filter
+      if (range < params_.min_range || range > params_.max_range)
+        continue;
+        
+      // Azimuth filter  
       double az = std::atan2(p.y, p.x);
       if (az >= min_a && az <= max_a)
         kept->points.push_back(p);
     }
 
-    // 3) Publish back
+    // Publish filtered cloud
     kept->width = kept->points.size();
     kept->height = 1;
+    kept->is_dense = false;
 
     sensor_msgs::msg::PointCloud2 out_msg;
     pcl::toROSMsg(*kept, out_msg);
