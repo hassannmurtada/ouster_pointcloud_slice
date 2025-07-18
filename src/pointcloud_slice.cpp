@@ -10,11 +10,11 @@ class CloudSlicer : public rclcpp::Node
 public:
   CloudSlicer() : Node("ouster_slice")
   {
-    // Declare parameters with defaults
-    declare_parameter<double>("min_range", 1.0);
+    // Declare parameters with defaults - Full 360° view by default
+    declare_parameter<double>("min_range", 0.0);
     declare_parameter<double>("max_range", 5.0);
-    declare_parameter<double>("min_angle_deg", 0.0);
-    declare_parameter<double>("max_angle_deg", 90.0);
+    declare_parameter<double>("min_angle_deg", -180.0);  // Full 360° coverage
+    declare_parameter<double>("max_angle_deg", 180.0);   // Full 360° coverage
     declare_parameter<std::string>("input_topic", "/ouster/points");
     declare_parameter<std::string>("output_topic", "/ouster/points_filtered");
 
@@ -46,12 +46,35 @@ public:
       [this](const std::vector<rclcpp::Parameter> &changes) -> rcl_interfaces::msg::SetParametersResult {
         rcl_interfaces::msg::SetParametersResult result;
         result.successful = true;
+        
+        bool params_changed = false;
         for (auto &c : changes) {
-          if (c.get_name() == "min_range")      params_.min_range     = c.as_double();
-          if (c.get_name() == "max_range")      params_.max_range     = c.as_double();
-          if (c.get_name() == "min_angle_deg")  params_.min_angle_deg = c.as_double();
-          if (c.get_name() == "max_angle_deg")  params_.max_angle_deg = c.as_double();
+          if (c.get_name() == "min_range") {
+            params_.min_range = c.as_double();
+            params_changed = true;
+          }
+          if (c.get_name() == "max_range") {
+            params_.max_range = c.as_double();
+            params_changed = true;
+          }
+          if (c.get_name() == "min_angle_deg") {
+            params_.min_angle_deg = c.as_double();
+            params_changed = true;
+          }
+          if (c.get_name() == "max_angle_deg") {
+            params_.max_angle_deg = c.as_double();
+            params_changed = true;
+          }
         }
+        
+        if (params_changed) {
+          RCLCPP_INFO(get_logger(),
+            "Parameters updated: range=%.1f–%.1f m, ang=%.1f–%.1f°",
+            params_.min_range, params_.max_range,
+            params_.min_angle_deg, params_.max_angle_deg
+          );
+        }
+        
         return result;
       }
     );
@@ -79,6 +102,9 @@ private:
 
   void callback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
   {
+    // Get current parameters (this ensures we always use latest values)
+    get_parameters();
+    
     // Convert ROS → PCL
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::fromROSMsg(*msg, *cloud);
@@ -90,28 +116,48 @@ private:
     double min_a = params_.min_angle_deg * M_PI / 180.0;
     double max_a = params_.max_angle_deg * M_PI / 180.0;
 
+    size_t input_count = cloud->points.size();
+    size_t range_filtered = 0;
+    size_t angle_filtered = 0;
+
     for (const auto &p : cloud->points) {
       // Skip invalid points
       if (!std::isfinite(p.x) || !std::isfinite(p.y) || !std::isfinite(p.z))
         continue;
         
-      // Calculate actual radial distance (not just X)
-      double range = std::sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
+      // Calculate horizontal distance (2D range, excluding Z)
+      double range = std::sqrt(p.x * p.x + p.y * p.y);
       
       // Range filter
-      if (range < params_.min_range || range > params_.max_range)
+      if (range < params_.min_range || range > params_.max_range) {
+        range_filtered++;
         continue;
+      }
         
       // Azimuth filter  
       double az = std::atan2(p.y, p.x);
-      if (az >= min_a && az <= max_a)
-        kept->points.push_back(p);
+      if (az < min_a || az > max_a) {
+        angle_filtered++;
+        continue;
+      }
+      
+      kept->points.push_back(p);
     }
 
     // Publish filtered cloud
     kept->width = kept->points.size();
     kept->height = 1;
     kept->is_dense = false;
+
+    // Debug output every 50 messages with current parameters
+    static int msg_count = 0;
+    if (++msg_count % 50 == 0) {
+      RCLCPP_INFO(get_logger(),
+        "Filtering: %zu→%zu points (filtered %zu by range, %zu by angle) | Using range=%.1f-%.1f m, angle=%.1f-%.1f°",
+        input_count, kept->points.size(), range_filtered, angle_filtered,
+        params_.min_range, params_.max_range, params_.min_angle_deg, params_.max_angle_deg
+      );
+    }
 
     sensor_msgs::msg::PointCloud2 out_msg;
     pcl::toROSMsg(*kept, out_msg);

@@ -76,8 +76,8 @@ ros2 run ouster_pointcloud_slice pointcloud_slice_node
 ```
 
 **Default Parameters:**
-- Range: 1.0 - 5.0 meters
-- Angle: 0° - 90° (front-right quadrant)
+- Range: 0.0 - 5.0 meters
+- Angle: -180° - 180° (full 360° view)
 - Input: `/ouster/points`
 - Output: `/ouster/points_filtered`
 
@@ -88,10 +88,10 @@ Edit `config/slice_params.yaml` to customize default parameters:
 ```yaml
 ouster_slice:
   ros__parameters:
-    min_range:      1.0      # minimum distance (meters)
+    min_range:      0.0      # minimum distance (meters)
     max_range:      5.0      # maximum distance (meters)  
-    min_angle_deg:  0.0      # minimum azimuth angle (degrees)
-    max_angle_deg:  90.0     # maximum azimuth angle (degrees)
+    min_angle_deg:  -180.0   # minimum azimuth angle (degrees)
+    max_angle_deg:  180.0    # maximum azimuth angle (degrees)
     input_topic:    /ouster/points
     output_topic:   /ouster/points_filtered
 ```

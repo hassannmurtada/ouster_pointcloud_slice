@@ -1,8 +1,8 @@
 ouster_slice:
   ros__parameters:
-    min_range:      1.0      # metres
-    max_range:      5.0
-    min_angle_deg:  0.0      # degrees, 0 = front
-    max_angle_deg:  90.0
+    min_range:      0.0      # minimum distance (meters)
+    max_range:      5.0      # maximum distance (meters)  
+    min_angle_deg:  -180.0   # minimum azimuth angle (degrees) - full 360°
+    max_angle_deg:  180.0    # maximum azimuth angle (degrees) - full 360°
     input_topic:    /ouster/points
     output_topic:   /ouster/points_filtered
