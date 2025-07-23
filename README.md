@@ -53,8 +53,14 @@ source install/setup.bash
 ## Quick Start
 
 ### Complete Setup (Recommended)
-Launch both sensor configuration and point cloud filtering:
+Launch both sensor configuration and point cloud filtering, as well as Ouster ROS driver:
 
+1. Start the Ouster ROS driver separately:
+```bash
+ros2 launch ouster_ros driver.launch.py sensor_hostname:=<YOUR_SENSOR_IP>
+```
+
+2. Launch both sensor configuration and point cloud filtering:
 ```bash
 ros2 launch ouster_pointcloud_slice slice_with_config.launch.py sensor_hostname:=169.254.223.207
 ```
