@@ -131,7 +131,7 @@ ros2 param set /ouster_configurator lidar_mode "1024x20"
 ros2 service call /ouster_configurator/apply_config std_srvs/srv/Trigger
 
 # Set forward-facing field of view
-ros2 param set /ouster_configurator azimuth_window_start -90000
+ros2 param set /ouster_configurator azimuth_window_start 270000
 ros2 param set /ouster_configurator azimuth_window_end 90000
 ros2 service call /ouster_configurator/apply_config std_srvs/srv/Trigger
 ```
@@ -151,12 +151,6 @@ Configure RViz2:
   - `/ouster/points_filtered` (filtered data)
 
 ## Performance Monitoring
-
-Check filtering performance:
-```bash
-ros2 topic hz /ouster/points_filtered
-ros2 topic delay /ouster/points_filtered
-```
 
 Monitor sensor configuration:
 ```bash
@@ -187,7 +181,7 @@ ros2 topic echo /ouster_configurator/status
 ```bash
 # Forward-facing 90-degree FOV, balanced resolution
 ros2 param set /ouster_configurator lidar_mode "1024x20"
-ros2 param set /ouster_configurator azimuth_window_start -45000
+ros2 param set /ouster_configurator azimuth_window_start 315000
 ros2 param set /ouster_configurator azimuth_window_end 45000
 ros2 service call /ouster_configurator/apply_config std_srvs/srv/Trigger
 ```
@@ -201,14 +195,6 @@ ros2 param set /ouster_configurator azimuth_window_end 360000
 ros2 service call /ouster_configurator/apply_config std_srvs/srv/Trigger
 ```
 
-### Low-Bandwidth Applications
-```bash
-# Minimal data rate, limited FOV
-ros2 param set /ouster_configurator lidar_mode "512x10"
-ros2 param set /ouster_configurator azimuth_window_start -60000
-ros2 param set /ouster_configurator azimuth_window_end 60000
-ros2 service call /ouster_configurator/apply_config std_srvs/srv/Trigger
-```
 
 ## Troubleshooting
 
@@ -222,9 +208,6 @@ ros2 service call /ouster_configurator/apply_config std_srvs/srv/Trigger
 - **"No valid scans received"**: Ensure `udp_dest` matches your host IP and ports aren't blocked
 - **Settings don't persist**: Use `persist_config: true` or configure via ouster-cli directly
 
-### Network Issues
-- **Dropped packets**: Check network bandwidth and increase UDP buffer sizes if needed
-- **Multiple sensor conflicts**: Use different ports for each sensor
 
 ## Package Structure
 
@@ -248,13 +231,6 @@ For detailed information about sensor configuration parameters, performance tuni
 - [Configuration Guide](docs/CONFIGURATION_GUIDE.md) - Comprehensive sensor parameter documentation
 - [Enhancement Summary](ENHANCEMENT_SUMMARY.md) - Technical implementation details
 
-## Contributing
-
-Contributions are welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Test your changes thoroughly
-4. Submit a pull request
 
 ## License
 
