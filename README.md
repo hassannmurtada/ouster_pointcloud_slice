@@ -1,6 +1,6 @@
 # Ouster Point Cloud Slice
 
-A ROS2 package for real-time filtering and configuration of Ouster LiDAR sensors. This package provides efficient point cloud processing with range and azimuth filtering, plus comprehensive sensor parameter management through an integrated configuration system.
+A ROS2 package for real-time filtering(C++) and configuration(Python) of Ouster LiDAR sensors. This package provides efficient point cloud processing with range and azimuth filtering, plus comprehensive sensor parameter management through an integrated configuration system.
 
 ## Overview
 
