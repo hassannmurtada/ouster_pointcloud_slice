@@ -18,16 +18,21 @@ class OusterConfigurator(Node):
     def __init__(self):
         super().__init__('ouster_configurator')
         
-        # Declare parameters
+        # Declare parameters - matching ouster-ros driver parameters
         self.declare_parameter('sensor_hostname', '169.254.223.207')
-        self.declare_parameter('lidar_mode', '1024x20')
-        self.declare_parameter('azimuth_window_start', -180000)  # millidegrees
-        self.declare_parameter('azimuth_window_end', 180000)     # millidegrees
-        self.declare_parameter('udp_dest', '169.254.223.100')
-        self.declare_parameter('udp_profile_lidar', 'RNG19_RFL8_SIG16_NIR16')
-        self.declare_parameter('timestamp_mode', 'TIME_FROM_INTERNAL_OSC')
-        self.declare_parameter('lidar_port', 7502)
-        self.declare_parameter('imu_port', 7503)
+        self.declare_parameter('udp_dest', '')
+        self.declare_parameter('mtp_dest', '')
+        self.declare_parameter('mtp_main', False)
+        self.declare_parameter('lidar_mode', '')
+        self.declare_parameter('timestamp_mode', '')
+        self.declare_parameter('ptp_utc_tai_offset', -37.0)
+        self.declare_parameter('udp_profile_lidar', '')
+        self.declare_parameter('metadata', '')
+        self.declare_parameter('lidar_port', 0)
+        self.declare_parameter('imu_port', 0)
+        self.declare_parameter('azimuth_window_start', 0)
+        self.declare_parameter('azimuth_window_end', 360000)
+        self.declare_parameter('persist_config', False)
         self.declare_parameter('auto_apply_on_startup', True)
         
         # Get current parameters
@@ -115,17 +120,29 @@ class OusterConfigurator(Node):
         timestamp_mode = self.get_parameter('timestamp_mode').value
         lidar_port = self.get_parameter('lidar_port').value
         imu_port = self.get_parameter('imu_port').value
+        persist_config = self.get_parameter('persist_config').value
         
         # Build configuration command
         config_args = ['config']
-        config_args.extend(['lidar_mode', lidar_mode])
-        config_args.extend(['azimuth_window_start', str(azimuth_start)])
-        config_args.extend(['azimuth_window_end', str(azimuth_end)])
-        config_args.extend(['udp_dest', udp_dest])
-        config_args.extend(['udp_profile_lidar', udp_profile])
-        config_args.extend(['timestamp_mode', timestamp_mode])
-        config_args.extend(['lidar_port', str(lidar_port)])
-        config_args.extend(['imu_port', str(imu_port)])
+        
+        # Only add non-empty parameters
+        if lidar_mode:
+            config_args.extend(['lidar_mode', lidar_mode])
+        if azimuth_start != 0 or azimuth_end != 360000:
+            config_args.extend(['azimuth_window_start', str(azimuth_start)])
+            config_args.extend(['azimuth_window_end', str(azimuth_end)])
+        if udp_dest:
+            config_args.extend(['udp_dest', udp_dest])
+        if udp_profile:
+            config_args.extend(['udp_profile_lidar', udp_profile])
+        if timestamp_mode:
+            config_args.extend(['timestamp_mode', timestamp_mode])
+        if lidar_port > 0:
+            config_args.extend(['lidar_port', str(lidar_port)])
+        if imu_port > 0:
+            config_args.extend(['imu_port', str(imu_port)])
+        if persist_config:
+            config_args.extend(['persist_config', 'true'])
         
         success, output = self.run_ouster_cli(config_args)
         

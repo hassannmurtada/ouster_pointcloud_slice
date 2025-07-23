@@ -1,21 +1,26 @@
 ouster_configurator:
   ros__parameters:
-    # Sensor connection settings
+    # Core sensor settings
     sensor_hostname: "169.254.223.207"    # IP address of your Ouster sensor
     
-    # Core LiDAR parameters - these directly affect data quality and bandwidth
-    lidar_mode: "1024x20"                 # Resolution x Frame Rate: 512x10, 512x20, 1024x10, 1024x20, 2048x10, 4096x5
-    azimuth_window_start: -180000         # Start angle in millidegrees (-180000 = -180°)
-    azimuth_window_end: 180000            # End angle in millidegrees (180000 = +180°, full 360°)
-    
     # Network configuration
-    udp_dest: "169.254.223.100"           # Destination IP for sensor data packets
-    lidar_port: 7502                      # UDP port for LiDAR data
-    imu_port: 7503                        # UDP port for IMU data
+    udp_dest: ""                          # Destination IP for sensor data packets (empty = use sensor default)
+    mtp_dest: ""                          # Multicast destination (empty = INADDR_ANY)
+    mtp_main: false                       # Configure and reinit sensor (true) or use active config (false)
+    lidar_port: 0                         # UDP port for LiDAR data (0 = auto-assign)
+    imu_port: 0                           # UDP port for IMU data (0 = auto-assign)
+    
+    # LiDAR operation parameters
+    lidar_mode: ""                        # Resolution x Frame Rate: 512x10, 512x20, 1024x10, 1024x20, 2048x10, 4096x5 (empty = no change)
+    azimuth_window_start: 0               # Start angle in millidegrees (0-360000)
+    azimuth_window_end: 360000            # End angle in millidegrees (0-360000, full 360°)
     
     # Data format and timing
-    udp_profile_lidar: "RNG19_RFL8_SIG16_NIR16"  # Packet profile: LEGACY, RNG19_RFL8_SIG16_NIR16, RNG19_RFL8_SIG16_NIR16_DUAL, FUSA_RNG15_RFL8_NIR8_DUAL
-    timestamp_mode: "TIME_FROM_INTERNAL_OSC"     # TIME_FROM_INTERNAL_OSC, TIME_FROM_SYNC_PULSE_IN, TIME_FROM_PTP_1588, TIME_FROM_ROS_TIME
+    udp_profile_lidar: ""                 # Packet profile: LEGACY, RNG19_RFL8_SIG16_NIR16, RNG19_RFL8_SIG16_NIR16_DUAL, FUSA_RNG15_RFL8_NIR8_DUAL (empty = no change)
+    timestamp_mode: ""                    # TIME_FROM_INTERNAL_OSC, TIME_FROM_SYNC_PULSE_IN, TIME_FROM_PTP_1588, TIME_FROM_ROS_TIME (empty = no change)
+    ptp_utc_tai_offset: -37.0             # UTC/TAI offset for PTP mode
     
-    # Behavior settings
+    # Configuration persistence and behavior
+    persist_config: false                 # Request sensor to persist settings
+    metadata: ""                          # Path to save metadata file (empty = auto-generate)
     auto_apply_on_startup: true           # Automatically apply configuration when node starts
