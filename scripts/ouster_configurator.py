@@ -4,6 +4,7 @@ import rclpy
 from rclpy.node import Node
 from std_srvs.srv import SetBool, Trigger
 from std_msgs.msg import String
+from rcl_interfaces.msg import SetParametersResult
 import subprocess
 import json
 import threading
@@ -71,7 +72,7 @@ class OusterConfigurator(Node):
     
     def parameter_callback(self, params):
         """Handle parameter changes"""
-        result = rclpy.parameter.SetParametersResult()
+        result = SetParametersResult()
         result.successful = True
         
         # Update sensor hostname if changed
@@ -129,8 +130,7 @@ class OusterConfigurator(Node):
         if lidar_mode:
             config_args.extend(['lidar_mode', lidar_mode])
         if azimuth_start != 0 or azimuth_end != 360000:
-            config_args.extend(['azimuth_window_start', str(azimuth_start)])
-            config_args.extend(['azimuth_window_end', str(azimuth_end)])
+            config_args.extend(['azimuth_window', f'[{azimuth_start},{azimuth_end}]'])
         if udp_dest:
             config_args.extend(['udp_dest', udp_dest])
         if udp_profile:
@@ -138,9 +138,9 @@ class OusterConfigurator(Node):
         if timestamp_mode:
             config_args.extend(['timestamp_mode', timestamp_mode])
         if lidar_port > 0:
-            config_args.extend(['lidar_port', str(lidar_port)])
+            config_args.extend(['udp_port_lidar', str(lidar_port)])
         if imu_port > 0:
-            config_args.extend(['imu_port', str(imu_port)])
+            config_args.extend(['udp_port_imu', str(imu_port)])
         if persist_config:
             config_args.extend(['persist_config', 'true'])
         
