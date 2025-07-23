@@ -19,6 +19,12 @@ install(TARGETS pointcloud_slice_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# Install Python scripts
+install(PROGRAMS
+  scripts/ouster_configurator.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 install(DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME}
 )

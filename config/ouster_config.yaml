@@ -1,0 +1,21 @@
+ouster_configurator:
+  ros__parameters:
+    # Sensor connection settings
+    sensor_hostname: "169.254.223.207"    # IP address of your Ouster sensor
+    
+    # Core LiDAR parameters - these directly affect data quality and bandwidth
+    lidar_mode: "1024x20"                 # Resolution x Frame Rate: 512x10, 512x20, 1024x10, 1024x20, 2048x10, 4096x5
+    azimuth_window_start: -180000         # Start angle in millidegrees (-180000 = -180°)
+    azimuth_window_end: 180000            # End angle in millidegrees (180000 = +180°, full 360°)
+    
+    # Network configuration
+    udp_dest: "169.254.223.100"           # Destination IP for sensor data packets
+    lidar_port: 7502                      # UDP port for LiDAR data
+    imu_port: 7503                        # UDP port for IMU data
+    
+    # Data format and timing
+    udp_profile_lidar: "RNG19_RFL8_SIG16_NIR16"  # Packet profile: LEGACY, RNG19_RFL8_SIG16_NIR16, RNG19_RFL8_SIG16_NIR16_DUAL, FUSA_RNG15_RFL8_NIR8_DUAL
+    timestamp_mode: "TIME_FROM_INTERNAL_OSC"     # TIME_FROM_INTERNAL_OSC, TIME_FROM_SYNC_PULSE_IN, TIME_FROM_PTP_1588, TIME_FROM_ROS_TIME
+    
+    # Behavior settings
+    auto_apply_on_startup: true           # Automatically apply configuration when node starts
